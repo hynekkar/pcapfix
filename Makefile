@@ -41,7 +41,26 @@ install:
 uninstall:
 	rm -f $(DESTDIR)$(BINDIR)/pcapfix
 	rm -f $(DESTDIR)$(MANDIR)/man1/pcapfix.1
+RPMDIR = RPMBUILD
+RPMFILENAME=pcapfix-1.1.0
+
+dist:
+	mkdir -p $(RPMFILENAME)
+	find . -maxdepth 1 -type "f" -exec cp {} $(RPMFILENAME)/ \;
+	tar chof - $(RPMFILENAME) | GZIP=--best gzip > ${RPMFILENAME}.tar.gz
+	rm -rf $(RPMFILENAME)
+
+srpm:
+	rm -rf "$(RPMDIR)/SOURCES/$(RPMFILENAME)"
+	mkdir -p $(RPMDIR)/BUILD/ $(RPMDIR)/SRPMS/ $(RPMDIR)/RPMS/ $(RPMDIR)/SOURCES
+	make dist
+	mv $(RPMFILENAME).tar.gz RPMBUILD/SOURCES/
+	rpmbuild -bs pcapfix.spec --define "_topdir `pwd`/$(RPMDIR)";
+
+rpm: srpm
+	rpmbuild --define "_topdir `pwd`/$(RPMDIR)" --rebuild $(RPMDIR)/SRPMS/$(RPMFILENAME)*.src.rpm;
 
 clean:
 	rm -f *.o
 	rm -f pcapfix
+	rm -rf $(RPMDIR)
